@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: Linux Fleet Dashboards
+    orgId: 1
+    folder: Linux Fleet Monitoring
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
