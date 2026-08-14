@@ -1,8 +1,39 @@
 # Linux Fleet Monitoring System
 
-A beginner-friendly SRE / DevOps portfolio project that monitors four Linux client servers from one central monitoring server using Prometheus, Node Exporter, and Grafana.
+A beginner-friendly SRE / DevOps portfolio project that demonstrates centralized Linux monitoring using Prometheus, Grafana, Node Exporter, and Docker Compose.
 
-The goal is to learn practical Linux monitoring without Kubernetes, cloud services, Terraform, Jenkins, Ansible, or complex microservices.
+The project monitors four simulated Linux nodes from a central monitoring stack and visualizes system health metrics such as CPU, memory, disk, network traffic, load, and uptime.
+
+This project focuses on practical observability concepts while keeping the architecture simple enough for freshers to understand, build, and explain during interviews.
+
+---
+
+## Architecture
+
+```text
+                     +----------------------+
+                     |      Prometheus      |
+                     |        :9090         |
+                     +----------+-----------+
+                                |
+                                |
+         -------------------------------------------------
+         |                |              |               |
+         |                |              |               |
+    +----v----+      +----v----+    +----v----+     +----v----+
+    |  node1  |      |  node2  |    |  node3  |     |  node4  |
+    | Exporter|      | Exporter|    | Exporter|     | Exporter|
+    +---------+      +---------+    +---------+     +---------+
+
+                                |
+                                |
+                     +----------v-----------+
+                     |       Grafana        |
+                     |        :3000         |
+                     +----------------------+
+```
+
+---
 
 ## Project Structure
 
@@ -14,255 +45,381 @@ linux-fleet-monitoring-system/
 │   └── systemd/
 │       ├── node_exporter.service
 │       └── prometheus.service
-├── docs/
-│   └── interview-questions.md
+├── docker/
+│   └── docker-compose.yml
 ├── logs/
 │   └── .gitkeep
 ├── screenshots/
 │   └── .gitkeep
-└── scripts/
-    └── health_check.sh
+├── scripts/
+│   └── health_check.sh
+└── .gitignore
 ```
 
-## Architecture
-
-```text
-                 +-----------------------------+
-                 |     Monitoring Server       |
-                 |-----------------------------|
-                 | Prometheus :9090            |
-                 | Grafana    :3000            |
-                 +-------------+---------------+
-                               |
-             Prometheus scrapes Node Exporter metrics
-                               |
-      +------------+-----------+-----------+------------+
-      |            |                       |            |
-+-----v----+  +----v-----+           +-----v----+  +----v-----+
-|Client 01 |  |Client 02 |           |Client 03 |  |Client 04 |
-|Node Exp. |  |Node Exp. |           |Node Exp. |  |Node Exp. |
-|:9100     |  |:9100     |           |:9100     |  |:9100     |
-+----------+  +----------+           +----------+  +----------+
-```
+---
 
 ## Features
 
-- Central monitoring server for four Linux machines.
-- Node Exporter metrics collection for Linux hosts.
-- Prometheus scrape configuration using static targets.
-- Grafana dashboard guidance for CPU, memory, disk, network, load, and uptime.
-- Simple Bash health check automation with logs and warnings.
-- Beginner-focused documentation suitable for interviews and resume discussion.
+- Centralized monitoring using Prometheus.
+- Grafana dashboards for infrastructure visibility.
+- Four monitored Linux nodes simulated using Docker containers.
+- CPU, memory, disk, network, load, and uptime monitoring.
+- Beginner-friendly Bash health check automation.
+- Docker Compose deployment.
+- PromQL-based dashboard visualization.
+- Practical observability project suitable for DevOps, SRE, and Platform Engineering interviews.
+
+---
 
 ## Technologies Used
 
 - Linux
+- Docker
+- Docker Compose
+- Prometheus
+- Grafana
+- Node Exporter
 - Bash
 - systemd
-- Prometheus
-- Node Exporter
-- Grafana
 - PromQL
+
+---
 
 ## Metrics Monitored
 
-- CPU usage
-- Memory usage
-- Disk usage
-- Network traffic
-- System load
-- Server uptime
+- CPU Usage
+- Memory Usage
+- Disk Usage
+- Network Traffic
+- System Load
+- Server Uptime
 
-## Setup Guide
+---
 
-> Replace example IP addresses with your own lab server IPs.
+# Docker-Based Lab Setup
 
-### 1. Install Node Exporter on Each Client Server
+This project uses Docker Compose to create a lightweight monitoring lab.
 
-Run these steps on all four client servers.
+The four monitored nodes are simulated using Node Exporter containers.
 
-```bash
-sudo useradd --no-create-home --shell /usr/sbin/nologin node_exporter
-cd /tmp
-curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-tar xvf node_exporter-1.8.2.linux-amd64.tar.gz
-sudo cp node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
-sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
-```
+## Prerequisites
 
-Create the systemd service:
+Verify Docker is installed:
 
 ```bash
-sudo cp configs/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now node_exporter
-sudo systemctl status node_exporter
+docker --version
+docker compose version
 ```
 
-Confirm metrics are available:
+Example:
+
+```text
+Docker version 28.x
+Docker Compose version v2.x
+```
+
+---
+
+## Start the Monitoring Stack
+
+Navigate to the docker directory:
 
 ```bash
-curl http://localhost:9100/metrics
+cd docker
 ```
 
-### 2. Install Prometheus on the Monitoring Server
+Start all services:
 
 ```bash
-sudo useradd --no-create-home --shell /usr/sbin/nologin prometheus
-sudo mkdir -p /etc/prometheus /var/lib/prometheus
-cd /tmp
-curl -LO https://github.com/prometheus/prometheus/releases/download/v2.53.1/prometheus-2.53.1.linux-amd64.tar.gz
-tar xvf prometheus-2.53.1.linux-amd64.tar.gz
-sudo cp prometheus-2.53.1.linux-amd64/prometheus /usr/local/bin/
-sudo cp prometheus-2.53.1.linux-amd64/promtool /usr/local/bin/
-sudo cp -r prometheus-2.53.1.linux-amd64/consoles /etc/prometheus/
-sudo cp -r prometheus-2.53.1.linux-amd64/console_libraries /etc/prometheus/
-sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+docker compose up -d
 ```
 
-### 3. Configure Prometheus
-
-Copy this repository's Prometheus config:
+Verify containers:
 
 ```bash
-sudo cp configs/prometheus.yml /etc/prometheus/prometheus.yml
-sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
+docker ps
 ```
 
-Edit `/etc/prometheus/prometheus.yml` and replace these example targets with real client IP addresses:
+Expected containers:
+
+```text
+prometheus
+grafana
+node1
+node2
+node3
+node4
+```
+
+---
+
+## Prometheus Configuration
+
+Prometheus configuration is stored in:
+
+```text
+configs/prometheus.yml
+```
+
+Prometheus scrapes metrics from:
 
 ```yaml
-- "192.168.1.101:9100"
-- "192.168.1.102:9100"
-- "192.168.1.103:9100"
-- "192.168.1.104:9100"
+node1:9100
+node2:9100
+node3:9100
+node4:9100
 ```
 
-Install and start the Prometheus systemd service:
-
-```bash
-sudo cp configs/systemd/prometheus.service /etc/systemd/system/prometheus.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now prometheus
-sudo systemctl status prometheus
-```
-
-Open Prometheus in a browser:
+Verify Prometheus is running:
 
 ```text
-http://MONITORING_SERVER_IP:9090
+http://localhost:9090
 ```
 
-Check targets:
+Verify scrape targets:
 
 ```text
-http://MONITORING_SERVER_IP:9090/targets
+http://localhost:9090/targets
 ```
 
-All four client targets should show `UP`.
+Expected:
 
-### 4. Install Grafana on the Monitoring Server
-
-On Ubuntu/Debian:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y apt-transport-https software-properties-common wget
-sudo mkdir -p /etc/apt/keyrings
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
-sudo apt-get update
-sudo apt-get install -y grafana
-sudo systemctl enable --now grafana-server
-sudo systemctl status grafana-server
+```text
+node1 = UP
+node2 = UP
+node3 = UP
+node4 = UP
 ```
+
+---
+
+## Grafana Setup
 
 Open Grafana:
 
 ```text
-http://MONITORING_SERVER_IP:3000
+http://localhost:3000
 ```
 
-Default login is usually `admin / admin`. Change the password when prompted.
+Default credentials:
 
-### 5. Connect Grafana to Prometheus
+```text
+Username: admin
+Password: admin
+```
+
+Change the password when prompted.
+
+---
+
+## Add Prometheus Data Source
 
 1. Open Grafana.
-2. Go to **Connections** → **Data sources**.
-3. Select **Prometheus**.
-4. Set URL to `http://localhost:9090` if Grafana and Prometheus run on the same server.
-5. Click **Save & test**.
+2. Navigate to Connections → Data Sources.
+3. Select Prometheus.
+4. Configure URL:
 
-### 6. Import or Create Dashboards
+```text
+http://prometheus:9090
+```
 
-Beginner option: import a community Node Exporter dashboard such as dashboard ID `1860` from Grafana dashboards.
+5. Click Save & Test.
 
-Manual learning option: create your own dashboard using the panel guide below.
+Expected:
 
-## Grafana Dashboard Guide
+```text
+Data source is working
+```
 
-Recommended layout:
+---
 
-| Row | Panel | PromQL Query |
-| --- | --- | --- |
-| 1 | Server status | `up{job="linux-client-servers"}` |
-| 1 | Uptime | `time() - node_boot_time_seconds{job="linux-client-servers"}` |
-| 2 | CPU usage | `100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle",job="linux-client-servers"}[5m])) * 100)` |
-| 2 | System load | `node_load1{job="linux-client-servers"}` |
-| 3 | Memory usage | `(1 - (node_memory_MemAvailable_bytes{job="linux-client-servers"} / node_memory_MemTotal_bytes{job="linux-client-servers"})) * 100` |
-| 3 | Disk usage | `(1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs",job="linux-client-servers"} / node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs",job="linux-client-servers"})) * 100` |
-| 4 | Network receive | `rate(node_network_receive_bytes_total{device!="lo",job="linux-client-servers"}[5m])` |
-| 4 | Network transmit | `rate(node_network_transmit_bytes_total{device!="lo",job="linux-client-servers"}[5m])` |
+## Import Dashboard
 
-Panel tips:
+Import Grafana Dashboard ID:
 
-- Use **Time series** panels for CPU, memory, disk, network, and load.
-- Use **Stat** panels for uptime and current server status.
-- Set CPU, memory, and disk units to **Percent (0-100)**.
-- Set network units to **bytes/sec**.
-- Use thresholds such as green under 70%, yellow from 70-85%, and red above 85%.
+```text
+1860
+```
 
-## Beginner Automation: Health Check Script
+Dashboard Name:
 
-Run the script locally on any Linux server:
+```text
+Node Exporter Full
+```
+
+This dashboard provides:
+
+- CPU Utilization
+- Memory Usage
+- Disk Usage
+- Filesystem Statistics
+- Network Throughput
+- Load Average
+- Uptime
+
+---
+
+## Useful PromQL Queries
+
+### Server Status
+
+```promql
+up
+```
+
+### CPU Usage
+
+```promql
+100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+```
+
+### Memory Usage
+
+```promql
+(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+```
+
+### Disk Usage
+
+```promql
+(1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100
+```
+
+### System Load
+
+```promql
+node_load1
+```
+
+### Network Receive
+
+```promql
+rate(node_network_receive_bytes_total{device!="lo"}[5m])
+```
+
+### Network Transmit
+
+```promql
+rate(node_network_transmit_bytes_total{device!="lo"}[5m])
+```
+
+---
+
+# Health Check Automation
+
+The project includes a Bash health monitoring script.
+
+Location:
+
+```text
+scripts/health_check.sh
+```
+
+Run:
 
 ```bash
 chmod +x scripts/health_check.sh
 ./scripts/health_check.sh
 ```
 
-The script checks CPU, memory, and disk usage, prints warnings when thresholds are exceeded, and writes output to `logs/health_check.log`.
+The script checks:
+
+- CPU Usage
+- Memory Usage
+- Disk Usage
+
+The script writes logs to:
+
+```text
+logs/health_check.log
+```
+
+---
+
+## Example Output
+
+```text
+========================================
+Health Check Time: Thu Aug 14 12:10:01
+Hostname: node1
+========================================
+
+CPU Usage: 12%
+Memory Usage: 45%
+Disk Usage on /: 28%
+
+Health check completed.
+```
+
+---
 
 ## Screenshots
 
-Add screenshots after you build the lab:
+### Prometheus Targets
 
-- `screenshots/prometheus-targets.png` - Prometheus targets showing four clients as `UP`.
-- `screenshots/grafana-dashboard.png` - Grafana Linux fleet dashboard.
-- `screenshots/health-check-output.png` - Bash script output.
+![Prometheus Targets](screenshots/prometheus-targets.png)
 
-## Resume Content
+### Grafana Dashboard
 
-### 2-Line Description
+![Grafana Dashboard](screenshots/grafana-dashboard.png)
 
-Built a Linux Fleet Monitoring System to monitor four Linux servers from a central Prometheus and Grafana monitoring server. Implemented Node Exporter metrics collection and a Bash health check script for basic operational visibility.
+### Prometheus Query
 
-### Resume Bullet Points
+![Prometheus Query](screenshots/prometheus-query-up.png)
 
-- Designed a beginner-friendly monitoring lab with one Prometheus/Grafana server scraping metrics from four Linux client servers.
-- Configured Node Exporter and Prometheus static targets to collect CPU, memory, disk, network, load, and uptime metrics.
-- Built Grafana dashboard guidance using PromQL queries to visualize Linux fleet health and troubleshoot resource usage.
-- Developed a Bash health check script that logs CPU, memory, and disk usage and prints threshold-based warnings.
+### Health Check Script
 
-### Technologies Used
+![Health Check Script](screenshots/health-check-output.png)
 
-Linux, Bash, systemd, Prometheus, Node Exporter, Grafana, PromQL
+---
+
+# Resume Description
+
+Built a Linux Fleet Monitoring System using Prometheus, Grafana, Node Exporter, Docker Compose, and Bash to monitor infrastructure metrics across four simulated Linux nodes.
+
+Implemented centralized observability dashboards, PromQL-based monitoring, and automated health checks to gain hands-on experience with monitoring and operational troubleshooting.
+
+---
+
+## Resume Bullet Points
+
+- Designed and deployed a centralized monitoring solution using Prometheus and Grafana for four simulated Linux nodes.
+- Configured Node Exporter metrics collection and Prometheus scraping to monitor CPU, memory, disk, network, load, and uptime metrics.
+- Developed Grafana dashboards and PromQL queries to visualize infrastructure health and troubleshoot performance issues.
+- Created a Bash-based health check utility that logs system resource usage and generates threshold-based warnings.
+
+---
 
 ## Future Enhancements
 
-- Add email alerts using Prometheus Alertmanager.
-- Add Slack alerts for critical server issues.
-- Add a simple auto-healing script to restart a failed service.
-- Add Docker Compose deployment for Prometheus and Grafana.
-- Add backup and restore steps for Grafana dashboards.
-- Add a troubleshooting runbook for common alerts.
+- Prometheus Alertmanager integration.
+- Email notifications for critical alerts.
+- Slack alert integration.
+- Service auto-healing and automatic restarts.
+- Docker volume persistence.
+- Grafana dashboard backup automation.
+- Monitoring additional Linux services.
+- Container health monitoring dashboards.
+
+---
+
+## Learning Outcomes
+
+After completing this project, you should understand:
+
+- Linux monitoring fundamentals.
+- Prometheus architecture and scraping.
+- Node Exporter metrics collection.
+- Grafana dashboard creation.
+- PromQL basics.
+- Docker Compose deployments.
+- Bash scripting for operational tasks.
+- Observability concepts used in SRE and DevOps environments.
+
+---
+
+## Author
+
+Sagar Dewangan
+
+DevOps | Cloud | SRE | Platform Engineering Enthusiast
