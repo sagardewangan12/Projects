@@ -1,0 +1,26 @@
+# Example Grafana configuration for this project.
+# Copy values into /etc/grafana/grafana.ini or use them as a checklist.
+# Do not hardcode real SMTP passwords in Git.
+
+[server]
+http_addr = 0.0.0.0
+http_port = 3000
+
+[security]
+# Change this after first login. Default login is admin/admin on a fresh install.
+admin_user = admin
+
+[smtp]
+enabled = true
+host = SMTP_HOST:SMTP_PORT
+user = SMTP_USER
+password = SMTP_PASSWORD
+from_address = grafana-alerts@example.com
+from_name = Linux Fleet Monitoring
+skip_verify = false
+
+[unified_alerting]
+enabled = true
+
+[alerting]
+enabled = false

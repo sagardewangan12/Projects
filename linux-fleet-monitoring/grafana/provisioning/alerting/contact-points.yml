@@ -1,0 +1,11 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Linux Fleet Email Alerts
+    receivers:
+      - uid: linux_fleet_email_receiver
+        type: email
+        settings:
+          addresses: sdewangan12032@gmail.com
+          singleEmail: false

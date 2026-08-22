@@ -1,0 +1,7 @@
+services:
+  nginx-demo:
+    build: .
+    container_name: aws-nginx-demo
+    ports:
+      - "8080:80"
+    restart: unless-stopped
